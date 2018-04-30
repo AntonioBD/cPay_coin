@@ -1,0 +1,22 @@
+[Unit]
+Description=cPay's distributed currency daemon
+After=network.target
+
+[Service]
+User=cpaycore
+Group=cpaycore
+
+Type=forking
+PIDFile=/var/lib/cpayd/cpayd.pid
+ExecStart=/usr/bin/cpayd -daemon -pid=/var/lib/cpayd/cpayd.pid \
+-conf=/etc/cpaycore/cpay.conf -datadir=/var/lib/cpayd -disablewallet
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
