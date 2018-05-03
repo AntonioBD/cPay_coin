@@ -52,11 +52,11 @@ reachable from the Tor network. Add these lines to your /etc/tor/torrc (or equiv
 config file):
 
 	HiddenServiceDir /var/lib/tor/cpaycore-service/
-	HiddenServicePort 9999 127.0.0.1:9999
-	HiddenServicePort 19999 127.0.0.1:19999
+	HiddenServicePort 9801 127.0.0.1:9801
+	HiddenServicePort 19801 127.0.0.1:19801
 
 The directory can be different of course, but (both) port numbers should be equal to
-your cpayd's P2P listen port (9999 by default).
+your cpayd's P2P listen port (9801 by default).
 
 	-externalip=X   You can tell cPay Core about its publicly reachable address using
 	                this option, and this can be a .onion address. Given the above
@@ -91,7 +91,7 @@ as well, use `discover` instead:
 
 	./cpayd ... -discover
 
-and open port 9999 on your firewall (or use -upnp).
+and open port 9801 on your firewall (or use -upnp).
 
 If you only want to use Tor to reach onion addresses, but not use it as a proxy
 for normal IPv4/IPv6 communication, use:
