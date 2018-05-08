@@ -1244,24 +1244,24 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
         // Early ages...
         // 1111/((x+1)^2)
         nSubsidyBase = (1111.0 / (pow((dDiff+1.0),2.0)));
-        if(nSubsidyBase > 0.01) nSubsidyBase = 0.01;
-        else if(nSubsidyBase < 0.01) nSubsidyBase = 0.01;
+        if(nSubsidyBase > 1) nSubsidyBase = 1;
+        else if(nSubsidyBase < 1) nSubsidyBase = 1;
     } else if (nPrevHeight < 17000 || (dDiff <= 75 && nPrevHeight < 24000)) {
         // CPU mining era
         // 11111/(((x+51)/6)^2)
         nSubsidyBase = (11111.0 / (pow((dDiff+51.0)/6.0,2.0)));
-        if(nSubsidyBase > 0.01) nSubsidyBase = 0.01;
-        else if(nSubsidyBase < 0.01) nSubsidyBase = 0.01;
+        if(nSubsidyBase > 1) nSubsidyBase = 1;
+        else if(nSubsidyBase < 1) nSubsidyBase = 1;
     } else {
         // GPU/ASIC mining era
         // 2222222/(((x+2600)/9)^2)
         nSubsidyBase = (2222222.0 / (pow((dDiff+2600.0)/9.0,2.0)));
-        if(nSubsidyBase > 0.01) nSubsidyBase = 0.01;
-        else if(nSubsidyBase < 0.01) nSubsidyBase = 0.01;
+        if(nSubsidyBase > 1) nSubsidyBase = 1;
+        else if(nSubsidyBase < 1) nSubsidyBase = 1;
     }
 
     // LogPrintf("height %u diff %4.2f reward %d\n", nPrevHeight, dDiff, nSubsidyBase);
-    CAmount nSubsidy = nSubsidyBase * COIN;
+    CAmount nSubsidy = nSubsidyBase * COIN / 100;
 
     // yearly decline of production by ~7.1% per year, projected ~18M coins max by year 2050+.
     for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
