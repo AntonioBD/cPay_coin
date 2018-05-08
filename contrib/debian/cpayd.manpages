@@ -1,0 +1,3 @@
+debian/manpages/cpayd.1
+debian/manpages/cpay.conf.5
+debian/manpages/cpay-cli.1

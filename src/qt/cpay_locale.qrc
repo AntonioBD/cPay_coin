@@ -1,0 +1,20 @@
+<!DOCTYPE RCC><RCC version="1.0">
+    <qresource prefix="/translations">
+        <file alias="bg">locale/cpay_bg.qm</file>
+        <file alias="de">locale/cpay_de.qm</file>
+        <file alias="en">locale/cpay_en.qm</file>
+        <file alias="es">locale/cpay_es.qm</file>
+        <file alias="fi">locale/cpay_fi.qm</file>
+        <file alias="fr">locale/cpay_fr.qm</file>
+        <file alias="it">locale/cpay_it.qm</file>
+        <file alias="ja">locale/cpay_ja.qm</file>
+        <file alias="pl">locale/cpay_pl.qm</file>
+        <file alias="pt">locale/cpay_pt.qm</file>
+        <file alias="ru">locale/cpay_ru.qm</file>
+        <file alias="sk">locale/cpay_sk.qm</file>
+        <file alias="sv">locale/cpay_sv.qm</file>
+        <file alias="vi">locale/cpay_vi.qm</file>
+        <file alias="zh_CN">locale/cpay_zh_CN.qm</file>
+        <file alias="zh_TW">locale/cpay_zh_TW.qm</file>
+    </qresource>
+</RCC>
