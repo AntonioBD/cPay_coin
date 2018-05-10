@@ -1262,10 +1262,6 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 
     // LogPrintf("height %u diff %4.2f reward %d\n", nPrevHeight, dDiff, nSubsidyBase);
     CAmount nSubsidy = nSubsidyBase * COIN / 100;
-    
-    if (nPrevHeight == 0) {
-        nSubsidy = 800000000 * COIN;
-    }
 
     // yearly decline of production by ~7.1% per year, projected ~18M coins max by year 2050+.
     for (int i = consensusParams.nSubsidyHalvingInterval; i <= nPrevHeight; i += consensusParams.nSubsidyHalvingInterval) {
