@@ -1262,7 +1262,13 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 
     // LogPrintf("height %u diff %4.2f reward %d\n", nPrevHeight, dDiff, nSubsidyBase);
     CAmount nSubsidy = nSubsidyBase * COIN / 100;
-    
+
+    int nMN80Block = Params().GetConsensus().nMasternodePayments80Block;
+    if(nPrevHeight >= nMN80Block)
+    {
+        nSubsidy = nSubsidyBase * COIN /  10; ///!!! начиная с nMN80Block-65555 увеличиваем награду в 10 раз по сравнению со стартом
+    }
+
     if (nPrevHeight == 0) {
         nSubsidy = 800000000 * COIN;
     }
@@ -1280,6 +1286,17 @@ CAmount GetBlockSubsidy(int nPrevBits, int nPrevHeight, const Consensus::Params&
 
 CAmount GetMasternodePayment(int nHeight, CAmount blockValue)
 {
+    int nMN80Block = Params().GetConsensus().nMasternodePayments80Block;
+
+      if(nHeight < nMN80Block)
+      {
+          return blockValue /5; ///!!! до момента хардфорка 65555;  ///!!! блок с которого начинаем платить МН 80%
+      }
+
+      return blockValue/1.25; ///!!! 80%
+
+///то что ниже можно удалить так как еще не успели дойти
+
     CAmount ret = blockValue/5; // start at 20%
 
     int nMNPIBlock = Params().GetConsensus().nMasternodePaymentsIncreaseBlock;
