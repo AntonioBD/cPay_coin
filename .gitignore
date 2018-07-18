@@ -132,3 +132,9 @@ cpay-cli
 cpayd
 cpay-qt
 make
+
+#my QT
+*.creator
+*.pro
+*.user
+*.files
