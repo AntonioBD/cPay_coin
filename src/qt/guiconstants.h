@@ -9,6 +9,9 @@
 /* Milliseconds between model updates */
 static const int MODEL_UPDATE_DELAY = 250;
 
+/* Milliseconds between miner updates */
+static const int MODEL_MINER_UPDATE_DELAY = 1500;
+
 /* AskPassphraseDialog -- Maximum passphrase length */
 static const int MAX_PASSPHRASE_SIZE = 1024;
 
