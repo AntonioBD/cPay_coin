@@ -322,6 +322,50 @@
         <translation>Показать информацию о Qt</translation>
     </message>
     <message>
+        <source>&amp;Mining</source>
+        <translation>&amp;Майнинг</translation>
+    </message>
+    <message>
+        <source>Miner Off</source>
+        <translation>Выкл. Майнер</translation>
+    </message>
+    <message>
+        <source>Miner On</source>
+        <translation>Вкл. Майнер</translation>
+    </message>
+    <message>
+        <source>Stop Mining</source>
+        <translation>Остановить Майнер</translation>
+    </message>
+    <message>
+        <source>Start Mining</source>
+        <translation>Запустить Майнер</translation>
+    </message>
+    <message>
+        <source>Use</source>
+        <translation>На</translation>
+    </message>
+    <message>
+        <source>all cores</source>
+        <translation>всех ядрах</translation>
+    </message>
+    <message>
+        <source>core</source>
+        <translation>ядре</translation>
+    </message>
+    <message>
+        <source>cores</source>
+        <translation>ядрах</translation>
+    </message>
+    <message>
+        <source>Not Mining</source>
+        <translation>Не Майним</translation>
+    </message>
+    <message>
+        <source>Mining on</source>
+        <translation>Майним на</translation>
+    </message>
+    <message>
         <source>&amp;Options...</source>
         <translation>&amp;Параметры...</translation>
     </message>
