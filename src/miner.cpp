@@ -32,6 +32,7 @@
 #include <boost/tuple/tuple.hpp>
 #include <queue>
 
+
 using namespace std;
 
 //////////////////////////////////////////////////////////////////////////////
@@ -342,7 +343,17 @@ void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned
 //
 // Internal miner
 //
+#ifdef ENABLE_WALLET
+//////////////////////////////////////////////////////////////////////////////
+//
+// Internal miner
+//
+double *dHashesPerSec = NULL;
+int64_t nHPSTimerStart = 0;
+bool GenerateCoins = false;
+int GenProcLimit = DEFAULT_GENERATE_THREADS;
 
+#endif // ENABLE_WALLET
 // ***TODO*** ScanHash is not yet used in cPay
 //
 // ScanHash scans nonces looking for a hash with at least some zero bits.
@@ -400,8 +411,10 @@ static bool ProcessBlockFound(const CBlock* pblock, const CChainParams& chainpar
 }
 
 // ***TODO*** that part changed in bitcoin, we are using a mix with old one here for now
+//void static BitcoinMiner(const CChainParams& chainparams, CConnman& connman, CWallet* pwallet)
 void static BitcoinMiner(const CChainParams& chainparams, CConnman& connman)
 {
+
     LogPrintf("cPayMiner -- started\n");
     SetThreadPriority(THREAD_PRIORITY_LOWEST);
     RenameThread("cpay-miner");
@@ -430,7 +443,7 @@ void static BitcoinMiner(const CChainParams& chainparams, CConnman& connman)
                 } while (true);
             }
 
-
+            GenerateCoins = true;
             //
             // Create new block
             //
@@ -512,11 +525,13 @@ void static BitcoinMiner(const CChainParams& chainparams, CConnman& connman)
     catch (const boost::thread_interrupted&)
     {
         LogPrintf("cPayMiner -- terminated\n");
+        GenerateCoins = false;
         throw;
     }
     catch (const std::runtime_error &e)
     {
         LogPrintf("cPayMiner -- runtime error: %s\n", e.what());
+        GenerateCoins = false;
         return;
     }
 }
@@ -525,8 +540,14 @@ void GenerateBitcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 {
     static boost::thread_group* minerThreads = NULL;
 
-    if (nThreads < 0)
-        nThreads = GetNumCores();
+    GenerateCoins = fGenerate;
+
+    int cores= GetNumCores();
+
+    if (nThreads < 0 || nThreads>cores)
+        nThreads = cores;
+
+    GenProcLimit=nThreads;
 
     if (minerThreads != NULL)
     {
@@ -540,5 +561,5 @@ void GenerateBitcoins(bool fGenerate, int nThreads, const CChainParams& chainpar
 
     minerThreads = new boost::thread_group();
     for (int i = 0; i < nThreads; i++)
-        minerThreads->create_thread(boost::bind(&BitcoinMiner, boost::cref(chainparams), boost::ref(connman)));
+             minerThreads->create_thread(boost::bind(&BitcoinMiner, boost::cref(chainparams), boost::ref(connman)));
 }

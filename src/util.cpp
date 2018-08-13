@@ -75,6 +75,7 @@
 #include <sys/prctl.h>
 #endif
 
+#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/case_conv.hpp> // for to_lower()
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp> // for startswith() and endswith()
@@ -1001,5 +1002,75 @@ std::string SafeIntVersionToString(uint32_t nVersion)
     {
         return "invalid_version";
     }
+}
+
+bool WriteMiningToConfig(bool mining,int procLimit)
+{
+    bool res=true;
+    res&= WriteKey("gen", (mining ? "1" : "0"));
+    if (procLimit!=0)
+            res&= WriteKey("genproclimit",itostr(procLimit));
+
+    return res;
+}
+
+bool WriteKey(std::string sKey, std::string sValue)
+{
+    // Allows cPay to store the key value in the config file.
+    boost::filesystem::path pathConfigFile(GetArg("-conf", "cpay.conf"));
+    if (!pathConfigFile.is_complete()) pathConfigFile = GetDataDir(false) / pathConfigFile;
+    if (!boost::filesystem::exists(pathConfigFile))
+    {
+        // Config is empty, create it:
+        FILE *outFileNew = fopen(pathConfigFile.string().c_str(),"w");
+        fputs("", outFileNew);
+        fclose(outFileNew);
+        LogPrintf("** Created brand new cpay.conf file **\n");
+    }
+    boost::to_lower(sKey);
+    std::string sLine = "";
+    ifstream streamConfigFile;
+    streamConfigFile.open(pathConfigFile.string().c_str());
+    std::string sConfig = "";
+    bool fWritten = false;
+    if(streamConfigFile)
+    {
+       while(getline(streamConfigFile, sLine))
+       {
+           // std::vector<std::string> vEntry = Split(sLine,"=");
+            std::vector<std::string> vEntry;
+            boost::split(vEntry, sLine, boost::is_any_of("="));
+            if (vEntry.size() == 2)
+            {
+                std::string sSourceKey = vEntry[0];
+                std::string sSourceValue = vEntry[1];
+                boost::to_lower(sSourceKey);
+                if (sSourceKey==sKey)
+                {
+                    sSourceValue = sValue;
+                    sLine = sSourceKey + "=" + sSourceValue;
+                    fWritten=true;
+                }
+            }
+            //sLine = strReplace(sLine,"\r","");
+            // sLine = strReplace(sLine,"\n","");
+            boost::replace_all(sLine, "\r", "");
+            boost::replace_all(sLine, "\n", "");
+            sLine += "\r\n";
+            sConfig += sLine;
+       }
+    }
+    if (!fWritten)
+    {
+        sLine = sKey + "=" + sValue + "\r\n";
+        sConfig += sLine;
+    }
+
+    streamConfigFile.close();
+    FILE *outFile = fopen(pathConfigFile.string().c_str(),"w");
+    fputs(sConfig.c_str(), outFile);
+    fclose(outFile);
+    ReadConfigFile(mapArgs, mapMultiArgs);
+    return true;
 }
 

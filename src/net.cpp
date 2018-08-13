@@ -380,8 +380,9 @@ CNode* CConnman::ConnectNode(CAddress addrConnect, const char *pszDest, bool fCo
     // Connect
     SOCKET hSocket;
     bool proxyConnectionFailed = false;
-    if (pszDest ? ConnectSocketByName(addrConnect, hSocket, pszDest, Params().GetDefaultPort(), nConnectTimeout, &proxyConnectionFailed) :
-                  ConnectSocket(addrConnect, hSocket, nConnectTimeout, &proxyConnectionFailed))
+
+    if (pszDest ? ConnectSocketByName(addrConnect, hSocket, pszDest, addrConnect.GetPort(), nConnectTimeout, &proxyConnectionFailed) :
+                          ConnectSocket(addrConnect, hSocket, nConnectTimeout, &proxyConnectionFailed))
     {
         if (!IsSelectableSocket(hSocket)) {
             LogPrintf("Cannot create connection: non-selectable socket created (fd >= FD_SETSIZE ?)\n");
@@ -1737,10 +1738,6 @@ void CConnman::ThreadOpenConnections()
             if (nANow - addr.nLastTry < 600 && nTries < 30)
                 continue;
 
-            // do not allow non-default ports, unless after 50 invalid addresses selected already
-            if (addr.GetPort() != Params().GetDefaultPort() && nTries < 50)
-                continue;
-
             addrConnect = addr;
             break;
         }
@@ -1770,6 +1767,7 @@ std::vector<AddedNodeInfo> CConnman::GetAddedNodeInfo()
         ret.reserve(vAddedNodes.size());
         BOOST_FOREACH(const std::string& strAddNode, vAddedNodes)
             lAddresses.push_back(strAddNode);
+
     }
 
 
@@ -1789,7 +1787,11 @@ std::vector<AddedNodeInfo> CConnman::GetAddedNodeInfo()
     }
 
     BOOST_FOREACH(const std::string& strAddNode, lAddresses) {
-        CService service(LookupNumeric(strAddNode.c_str(), Params().GetDefaultPort()));
+        string strDest;
+        int port = Params().GetDefaultPort();
+        SplitHostPort(strAddNode, port, strDest);
+        CService service(LookupNumeric(strAddNode.c_str(), port));
+
         if (service.IsValid()) {
             // strAddNode is an IP:port
             auto it = mapConnected.find(service);
@@ -1827,7 +1829,10 @@ void CConnman::ThreadOpenAddedConnections()
                 CSemaphoreGrant grant(*semOutbound);
                 // If strAddedNode is an IP/port, decode it immediately, so
                 // OpenNetworkConnection can detect existing connections to that IP/port.
-                CService service(LookupNumeric(info.strAddedNode.c_str(), Params().GetDefaultPort()));
+                string strDest;
+                int port = Params().GetDefaultPort();
+                SplitHostPort(info.strAddedNode, port, strDest);
+                CService service(LookupNumeric(info.strAddedNode.c_str(), port));
                 OpenNetworkConnection(CAddress(service, NODE_NONE), &grant, info.strAddedNode.c_str(), false);
                 if (!interruptNet.sleep_for(std::chrono::milliseconds(500)))
                     return;

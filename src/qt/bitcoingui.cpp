@@ -18,6 +18,7 @@
 #include "platformstyle.h"
 #include "rpcconsole.h"
 #include "utilitydialog.h"
+#include "miner.h"
 
 #ifdef ENABLE_WALLET
 #include "walletframe.h"
@@ -55,6 +56,7 @@
 #include <QTimer>
 #include <QToolBar>
 #include <QVBoxLayout>
+#include <QSignalMapper>
 
 #if QT_VERSION < 0x050000
 #include <QTextDocument>
@@ -120,7 +122,9 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *n
     modalOverlay(0),
     prevBlocks(0),
     spinnerFrame(0),
-    platformStyle(platformStyle)
+    platformStyle(platformStyle),
+    miningOffAction(0)
+
 {
     /* Open CSS when configured */
     this->setStyleSheet(GUIUtil::loadStyleSheet());
@@ -206,12 +210,15 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *n
     labelEncryptionIcon = new QLabel();
     labelWalletHDStatusIcon = new QLabel();
     labelConnectionsIcon = new GUIUtil::ClickableLabel();
-
     labelBlocksIcon = new GUIUtil::ClickableLabel();
+    labelMiningIcon = new QLabel();
+
     if(enableWallet)
     {
         frameBlocksLayout->addStretch();
         frameBlocksLayout->addWidget(unitDisplayControl);
+        frameBlocksLayout->addStretch();
+        frameBlocksLayout->addWidget(labelMiningIcon);
         frameBlocksLayout->addStretch();
         frameBlocksLayout->addWidget(labelEncryptionIcon);
         frameBlocksLayout->addWidget(labelWalletHDStatusIcon);
@@ -221,6 +228,23 @@ BitcoinGUI::BitcoinGUI(const PlatformStyle *platformStyle, const NetworkStyle *n
     frameBlocksLayout->addStretch();
     frameBlocksLayout->addWidget(labelBlocksIcon);
     frameBlocksLayout->addStretch();
+
+    // Set mining pixmap
+    QString theme = GUIUtil::getThemeName();
+    labelMiningIcon->setPixmap(QIcon(":/icons/" + theme + "/mineroff").pixmap(STATUSBAR_ICONSIZE, STATUSBAR_ICONSIZE));
+
+#ifdef ENABLE_WALLET
+    if(enableWallet)
+    {
+        QTimer *timerMiningIcon = new QTimer(labelMiningIcon);
+        timerMiningIcon->start(MODEL_MINER_UPDATE_DELAY);
+        connect(timerMiningIcon, SIGNAL(timeout()), this, SLOT(updateMinerState()));
+
+    } else
+#endif // ENABLE_WALLET
+    {
+        labelMiningIcon->setVisible(false);
+    }
 
     // Progress bar and label for blocks download
     progressBarLabel = new QLabel();
@@ -481,6 +505,12 @@ void BitcoinGUI::createActions()
         connect(usedSendingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedSendingAddresses()));
         connect(usedReceivingAddressesAction, SIGNAL(triggered()), walletFrame, SLOT(usedReceivingAddresses()));
         connect(openAction, SIGNAL(triggered()), this, SLOT(openClicked()));
+
+        miningOffAction = new QAction(QIcon(":/icons/" + theme + "/mineroff"), tr("Miner Off"), this);
+        miningOffAction->setStatusTip(tr("Stop Mining"));
+        connect(miningOffAction, SIGNAL(triggered()), this, SLOT(miningOff()));
+
+
     }
 #endif // ENABLE_WALLET
 
@@ -547,6 +577,34 @@ void BitcoinGUI::createMenuBar()
     help->addSeparator();
     help->addAction(aboutAction);
     help->addAction(aboutQtAction);
+
+#ifdef ENABLE_WALLET
+    if(walletFrame)
+    {
+        QString theme = GUIUtil::getThemeName();
+
+        QMenu *mining = appMenuBar->addMenu(tr("&Mining"));
+        mining->addSeparator();
+
+        int miners=GetNumCores();
+        QSignalMapper *signalMapper = new QSignalMapper (this) ;
+        for(int i=1;i<=miners;i++)
+        {
+            QString cores = i==1 ? "1 "+tr("core") : QString::number(i)+" "+tr("cores");
+            QAction *newProc = new QAction(QIcon(":/icons/" + theme + "/mineron"), tr("Use")+" "+cores, this);
+            newProc->setStatusTip(tr("Start Mining on many cores"));
+
+            mining->addAction(newProc);
+            connect (newProc, SIGNAL(triggered()), signalMapper, SLOT(map()));
+            signalMapper -> setMapping (newProc, i) ;
+        }
+        connect(signalMapper, SIGNAL(mapped(int)), this, SLOT(miningOn(int))) ;
+
+        mining->addSeparator();
+        mining->addAction(miningOffAction);
+    }
+#endif // ENABLE_WALLET
+
 }
 
 void BitcoinGUI::createToolBars()
@@ -582,6 +640,65 @@ void BitcoinGUI::createToolBars()
     }
 #endif // ENABLE_WALLET
 }
+
+#ifdef ENABLE_WALLET
+
+void BitcoinGUI::updateMinerState()
+{
+    QString theme = GUIUtil::getThemeName();
+    if (GenerateCoins)
+    {
+        int miners= GenProcLimit ;
+        QString cores=tr("all cores");
+        if (miners>-1) cores = miners==1 ? " 1 "+tr("core") : " "+QString::number(miners)+" "+tr("cores");
+
+        labelMiningIcon->setPixmap(QIcon(":/icons/" + theme + "/mineron").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelMiningIcon->setToolTip(tr("Mining on")+cores);
+     }
+    else
+    {
+        labelMiningIcon->setPixmap(QIcon(":/icons/" + theme + "/mineroff").pixmap(STATUSBAR_ICONSIZE,STATUSBAR_ICONSIZE));
+        labelMiningIcon->setToolTip(tr("Not Mining"));
+    }
+
+}
+
+void BitcoinGUI::miningOff()
+{
+setMining(false, 0);
+GenerateBitcoins(false, 0, Params(), *g_connman);
+}
+/// default 1 core, -1 all
+void BitcoinGUI::miningOn(int nGenProcLimit=1)
+{
+setMining(true, nGenProcLimit);
+GenerateBitcoins(true, nGenProcLimit, Params(), *g_connman);
+
+}
+
+void BitcoinGUI::setMining(bool mining,int nGenProcLimit)
+{
+    if (mining==GenerateCoins && nGenProcLimit==GenProcLimit)
+        return;
+
+    mapArgs["-gen"] = (mining ? "1" : "0");
+    if (nGenProcLimit!=0)
+    {
+        mapArgs["-genproclimit"] = itostr(nGenProcLimit); //0 значение не нужно
+       //GenProcLimit=nGenProcLimit; set in GenerateBitcoins
+    }
+
+    //GenerateCoins=mining; set in GenerateBitcoins
+
+    bool fSuccess = WriteMiningToConfig(mining, nGenProcLimit); //пишем в конфиг
+    if (!fSuccess)
+        {
+        std::string sNarr = "WriteMiningToConfig Failed.";
+        QMessageBox::warning(this, QString::fromStdString(sNarr), QString::fromStdString(sNarr), QMessageBox::Ok, QMessageBox::Ok);
+        }
+
+}
+#endif // ENABLE_WALLET
 
 void BitcoinGUI::setClientModel(ClientModel *clientModel)
 {
