@@ -77,6 +77,8 @@ extern CTranslationInterface translationInterface;
 extern const char * const BITCOIN_CONF_FILENAME;
 extern const char * const BITCOIN_PID_FILENAME;
 
+extern bool WriteKey(std::string sKey, std::string sValue);
+extern bool WriteMiningToConfig(bool, int);
 /**
  * Translation function: Call Translate signal on UI interface, which returns a boost::optional result.
  * If no translation slot is registered, nothing is returned, and simply return the input.

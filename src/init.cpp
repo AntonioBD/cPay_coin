@@ -167,6 +167,7 @@ volatile bool fRequestShutdown = false;
 void StartShutdown()
 {
     fRequestShutdown = true;
+    GenerateCoins = false;
 }
 bool ShutdownRequested()
 {

@@ -92,7 +92,7 @@ private:
     QLabel *progressBarLabel;
     QProgressBar *progressBar;
     QProgressDialog *progressDialog;
-
+    QLabel *labelMiningIcon;
     QMenuBar *appMenuBar;
     QAction *overviewAction;
     QAction *historyAction;
@@ -126,6 +126,7 @@ private:
     QAction *openAction;
     QAction *showHelpMessageAction;
     QAction *showPrivateSendHelpAction;
+    QAction *miningOffAction;
 
     QSystemTrayIcon *trayIcon;
     QMenu *trayIconMenu;
@@ -162,7 +163,6 @@ private:
 
     /** Update UI with latest network info from model. */
     void updateNetworkState();
-
     void updateHeadersSyncProgressLabel();
 
 Q_SIGNALS:
@@ -209,6 +209,9 @@ public Q_SLOTS:
 
     /** Show incoming transaction notification for new transactions. */
     void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label);
+
+    /** set mining status */
+    void setMining(bool,int);
 #endif // ENABLE_WALLET
 
 private Q_SLOTS:
@@ -231,6 +234,11 @@ private Q_SLOTS:
 
     /** Show open dialog */
     void openClicked();
+
+    void miningOff();
+    void miningOn(int);
+    void updateMinerState();
+
 #endif // ENABLE_WALLET
     /** Show configuration dialog */
     void optionsClicked();
